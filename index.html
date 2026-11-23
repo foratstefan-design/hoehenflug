@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="de"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Höhenflug – Wie lange hältst du dich oben?</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=VT323&display=swap">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--ink:#edf8ef;--cyan:#7ee5df;--coral:#ff8cab;--gold:#f5db83;--panel:#0b1d31f2;--line:#4b7388;--sky-a:#6ab8ea;--sky-b:#d6f1ff;--title:#f6fff0;--sub:#1e4a62;--muted:#9bbacb;color-scheme:light dark}
+:root:not([data-theme="light"]){}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--sky-a:#050f1f;--sky-b:#17375a;--sub:#b9d6de}}
+:root[data-theme="dark"]{--sky-a:#050f1f;--sky-b:#17375a;--sub:#b9d6de}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;background:#17375a;font:14px/1.7 'IBM Plex Mono',ui-monospace,monospace;color:var(--ink);overflow-x:hidden}
+#sky{position:fixed;inset:0;width:100%;height:100%;z-index:-2;image-rendering:pixelated}
+.vig{position:fixed;inset:0;z-index:-1;pointer-events:none;background:radial-gradient(ellipse at 50% 35%,transparent 30%,#02101d55 100%)}
+h1,h2,h3{font-family:'VT323',monospace;font-weight:400;margin:0}
+#app{max-width:720px;margin:0 auto;padding:205px 18px 50px}
+#hud{position:fixed;top:0;left:0;right:0;padding:calc(10px + env(safe-area-inset-top,0px)) 12px 8px;display:flex;justify-content:space-between;align-items:flex-start;gap:8px;z-index:5;pointer-events:none}
+.box{background:#071827ec;border-top:1px solid #547287;padding:6px 12px 8px;min-width:92px}.box small{display:block;font-size:11px;letter-spacing:.16em;color:#92acbd}
+.box strong{font:400 1.9rem/1 'VT323',monospace;color:var(--cyan);white-space:nowrap}.box.r{text-align:right}.box.r strong{color:var(--coral)}
+.mid{text-align:center;font-size:12px;color:#d3e8ee;line-height:1.5;padding-top:4px;text-shadow:0 1px 2px #02101d}.mid b{font:400 1.5rem/1 'VT323',monospace;color:var(--cyan);display:block}
+.panel{background:var(--panel);border:1px solid #42677e;box-shadow:6px 6px 0 #020d1966;padding:22px 24px;margin-bottom:16px}
+.eyebrow{font-size:12px;letter-spacing:.16em;color:var(--coral);text-transform:uppercase;margin:0 0 10px}
+.hero{text-align:center;padding:10px 0 26px}
+.hero h1{font-size:clamp(4.6rem,17vw,8rem);line-height:.82;letter-spacing:.05em;color:var(--title);-webkit-text-stroke:1px #326f80;text-shadow:4px 4px 0 #ff7da5,7px 7px 0 #507f91}
+.hero p{color:var(--sub);max-width:520px;margin:18px auto 0}
+.btn{display:block;width:100%;border:1px solid #678f9c;background:#19394e;color:#e6f4e9;padding:13px 18px;font:500 14px 'IBM Plex Mono',monospace;box-shadow:3px 3px 0 #020d19;cursor:pointer;text-align:center}
+.btn:hover:not(:disabled){background:#244c61;border-color:var(--cyan)}.btn:disabled{opacity:.5;cursor:not-allowed}.btn:focus-visible,input:focus-visible,.mode:focus-visible{outline:2px dashed var(--cyan);outline-offset:4px}
+.btn.big{font:400 1.9rem/1 'VT323',monospace;letter-spacing:.08em;padding:18px}.btn.coral{background:#d7658b;border-color:#ffbed0;color:#091c2c}.btn.coral:hover:not(:disabled){background:#f48bac}
+.daily{border-left:3px solid var(--coral);text-align:left;display:grid}.daily b{font:400 1.9rem/1 'VT323',monospace;color:var(--coral);letter-spacing:.07em}.daily em{font-style:normal;color:var(--cyan);font-size:13px}
+.modes{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin:10px 0 14px}
+.mode{background:#102b42;border:1px solid #426b80;color:#bdd5df;padding:8px 4px;text-align:center;font:400 1.35rem/1.1 'VT323',monospace;text-transform:uppercase;cursor:pointer}.mode small{display:block;font:400 11px/1.3 'IBM Plex Mono',monospace;color:#9ab9c9;text-transform:none}
+.mode[aria-pressed=true]{border-color:var(--cyan);color:var(--cyan);background:#1b4658}
+.lock{font-size:12px;color:var(--muted);margin:6px 0 0}
+.tag{font-size:12px;letter-spacing:.14em;color:var(--coral);text-transform:uppercase}.badge{margin-left:8px;border:1px solid #60858e;padding:1px 7px;font-size:12px;color:#c5e8d6}
+.q{font:400 clamp(2rem,6vw,2.9rem)/1.08 'VT323',monospace;margin:10px 0 8px;text-shadow:2px 2px 0 #25485b}.note{font-size:12px;color:#a2bfd0;margin:0}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:16px 0}
+.ch{display:flex;gap:12px;align-items:center;text-align:left;min-height:68px;padding:12px;background:#0d2940;border:1px solid #5e8b9d;border-left:3px solid #629eac;color:#e5f3ec;font:500 14px/1.5 'IBM Plex Mono',monospace;box-shadow:3px 3px 0 #020d19;cursor:pointer}
+.ch:hover:not(:disabled){background:#1c4559;border-color:var(--cyan)}.ch:disabled{cursor:default;opacity:.7}.ch i{font:400 1.6rem/1 'VT323',monospace;font-style:normal;color:#8fb8c8;border:1px solid #48758b;min-width:28px;text-align:center}
+.ch.ok{background:#163e3e;border-color:#8bd3b5;opacity:1}.ch.no{background:#442238;border-color:#d981a1;opacity:1}
+.typed{display:flex;gap:10px;margin:16px 0}.typed input{flex:1;min-width:0;height:54px;padding:0 14px;background:#071624;border:2px solid #53899b;color:#edf8ef;font:400 1.6rem 'VT323',monospace}.typed .btn{width:auto}
+.timer{height:4px;background:#07111c;margin-top:8px}.timer i{display:block;height:100%;background:var(--cyan);transform-origin:left}.timer i.u{background:var(--coral)}
+.tinfo{display:flex;justify-content:space-between;font-size:12px;color:#adc6d2}.tinfo b{font:400 1.4rem/1 'VT323',monospace;color:var(--cyan)}
+.fb{margin-top:14px;padding:12px 16px;border-left:4px solid var(--cyan);background:#0b243b;font-size:13px}.fb strong{display:block;font:400 1.9rem/1.1 'VT323',monospace;color:var(--cyan)}
+.fb.w{border-color:var(--gold)}.fb.w strong{color:var(--gold)}.fb.d{border-color:var(--coral);background:#382139}.fb.d strong{color:#ffc0d1}
+.rec{border-left:3px solid var(--gold);background:#2e2d3bcc;padding:10px 14px;margin:12px 0 0;font-size:13px;color:#e4d5af}
+.crash{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#431b3266;text-align:center;padding:30px}
+.crash b{font:400 clamp(3.6rem,14vw,6rem)/.9 'VT323',monospace;color:#ffd5d9;text-shadow:4px 4px 0 #b64a77}
+.res{text-align:center}.res h1{font-size:clamp(2.4rem,8vw,3.4rem);line-height:1.05}.depth{font:400 clamp(3.6rem,14vw,5.2rem)/1.05 'VT323',monospace;color:var(--cyan);margin:12px 0 0}.depth small{font-size:1.8rem}
+.met{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:18px 0}.met div{background:#0e2b40;border:1px solid #365f76;padding:12px 4px}.met strong{display:block;font:400 1.9rem/1.1 'VT323',monospace;color:var(--cyan)}.met span{font-size:12px;color:#9bbacb}
+.det{text-align:left;margin:16px 0;font-size:13px;color:#c0d8df}.det summary{cursor:pointer}.det li{display:flex;justify-content:space-between;gap:10px;padding:4px 0;border-bottom:1px solid #47667d55}
+ul{list-style:none;padding:0;margin:8px 0}details.panel p{margin:8px 0;color:#b2ccd7}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#0a2137;border:1px solid var(--cyan);padding:10px 16px;opacity:0;transition:opacity .3s;pointer-events:none;z-index:30}.toast.s{opacity:1}
+.foot{text-align:center;font-size:12px;color:var(--muted);margin-top:24px}
+@media(max-width:560px){.grid{grid-template-columns:1fr}.modes{grid-template-columns:repeat(2,1fr)}.mode:first-child{grid-column:1/-1}.box{min-width:70px;padding:5px 8px 6px}.box strong{font-size:1.5rem}.panel{padding:18px 16px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style></head><body>
+<canvas id="sky" aria-hidden="true"></canvas><div class="vig" aria-hidden="true"></div>
+<div id="hud" hidden><div class="box"><small>FLUGHÖHE</small><strong><span id="hh">0</span> m</strong></div><div class="mid"><b id="hs">0 RICHTIG</b><span id="hm">MIX</span><br><span id="hc">STABIL</span> · <span id="hp">0</span> PUNKTE</div><div class="box r"><small>REAKTION</small><strong id="ht">18,0 s</strong></div></div>
+<main id="app"></main><div class="toast" id="toast" role="status"></div>
+<script>
+// ---------- Daten (Startdaten, Bekanntheit = geschätzte monatliche Wikipedia-Aufrufe) ----------
+const mk=a=>a.map(([n,y,v,al])=>({n,y,v,a:al?al.split('|'):[]}));
+let LISTS=[
+{id:'disney',cat:'Disney-Filme',sg:'Disney-Film',typed:1,items:mk([["Der König der Löwen",1994,90000,"Lion King|König der Löwen"],["Die Eiskönigin",2013,85000,"Frozen"],["Aladdin",1992,70000],["Arielle, die Meerjungfrau",1989,65000,"Arielle|The Little Mermaid"],["Die Schöne und das Biest",1991,60000,"Beauty and the Beast"],["Vaiana",2016,45000,"Moana"],["Rapunzel – Neu verföhnt",2010,40000,"Rapunzel|Tangled"],["Mulan",1998,40000],["Tarzan",1999,35000],["Pocahontas",1995,30000],["Lilo & Stitch",2002,30000,"Lilo und Stitch"],["Encanto",2021,28000],["Ein Königreich für ein Lama",2000,12000,"The Emperors New Groove"],["Bolt",2008,9000],["Atlantis – Das Geheimnis der verlorenen Stadt",2001,9000,"Atlantis"],["Himmel und Huhn",2005,5000,"Chicken Little"],["Bärenbrüder",2003,5000,"Brother Bear"],["Der Schatzplanet",2002,4500,"Treasure Planet"],["Die Abenteuer von Bernard und Bianca",1977,3500,"Bernard und Bianca"],["Cap und Capper",1981,3500],["Basil, der große Mäusedetektiv",1986,2500,"Basil der große Mäusedetektiv"],["Taran und der Zauberkessel",1985,2000,"Taran"]])},
+{id:'europa',cat:'Länder Europas',sg:'Land Europas',g:'n',typed:1,items:mk([["Deutschland",0,95000],["Frankreich",0,90000],["Italien",0,88000],["Spanien",0,85000],["Russland",0,85000],["Großbritannien",0,80000,"Vereinigtes Königreich|England|UK"],["Polen",0,60000],["Ukraine",0,55000],["Niederlande",0,55000,"Holland"],["Schweiz",0,55000],["Österreich",0,55000],["Griechenland",0,50000],["Schweden",0,50000],["Norwegen",0,45000],["Portugal",0,45000],["Irland",0,40000],["Dänemark",0,40000],["Finnland",0,38000],["Belgien",0,38000],["Tschechien",0,35000,"Tschechische Republik"],["Ungarn",0,33000],["Kroatien",0,30000],["Island",0,30000],["Rumänien",0,28000],["Serbien",0,22000],["Bulgarien",0,22000],["Slowakei",0,18000],["Slowenien",0,15000],["Litauen",0,14000],["Luxemburg",0,14000],["Lettland",0,12000],["Estland",0,12000],["Bosnien und Herzegowina",0,12000,"Bosnien"],["Albanien",0,11000],["Malta",0,10000],["Nordmazedonien",0,9000,"Mazedonien"],["Zypern",0,9000],["Weißrussland",0,9000,"Belarus"],["Montenegro",0,8000],["Monaco",0,8000],["Moldau",0,7000,"Moldawien"],["Vatikanstadt",0,7000,"Vatikan"],["Liechtenstein",0,5000],["San Marino",0,4000],["Andorra",0,4000]])},
+{id:'erf',cat:'Erfindungen & Meilensteine',sg:'Meilenstein',items:mk([["Telefon",1876,60000],["Glühlampe",1879,45000,"Glühbirne"],["Penicillin",1928,35000],["World Wide Web",1989,40000,"WWW"],["iPhone",2007,80000],["YouTube",2005,90000],["Facebook",2004,85000],["Röntgenstrahlung",1895,30000],["Automobil",1886,50000],["Motorflug",1903,12000],["Transistor",1947,28000],["Tetris",1984,25000],["Game Boy",1989,20000],["PlayStation",1994,30000],["Wikipedia",2001,70000],["Twitter",2006,60000],["Instagram",2010,55000],["Kernspaltung",1938,15000],["Spotify",2008,30000],["Netflix",1997,40000],["Google",1998,95000]])},
+{id:'film',cat:'Kinofilme',sg:'Film',g:'m',typed:1,items:mk([["Titanic",1997,90000],["Star Wars",1977,85000,"Krieg der Sterne"],["Jurassic Park",1993,70000],["Avatar – Aufbruch nach Pandora",2009,70000,"Avatar"],["Matrix",1999,65000,"The Matrix"],["Der Pate",1972,60000,"The Godfather"],["Harry Potter und der Stein der Weisen",2001,60000,"Harry Potter"],["Inception",2010,55000],["Der Herr der Ringe: Die Gefährten",2001,55000,"Herr der Ringe"],["Forrest Gump",1994,50000],["Toy Story",1995,50000],["Shrek",2001,45000],["Pulp Fiction",1994,45000],["Zurück in die Zukunft",1985,45000,"Back to the Future"],["Fluch der Karibik",2003,45000,"Pirates of the Caribbean"],["Gladiator",2000,40000],["E.T. – Der Außerirdische",1982,35000,"ET"],["Der weiße Hai",1975,35000,"Jaws"],["Das Boot",1981,22000],["Metropolis",1927,20000],["Der Untergang",2004,18000],["Lola rennt",1998,15000],["Nosferatu",1922,14000],["Good Bye, Lenin!",2003,14000,"Good Bye Lenin"],["Das Leben der Anderen",2006,13000]])},
+{id:'spiel',cat:'Videospiele',sg:'Videospiel',g:'n',typed:1,items:mk([["Minecraft",2011,85000],["Super Mario Bros.",1985,70000,"Super Mario"],["Fortnite",2017,60000],["Grand Theft Auto V",2013,50000,"GTA 5|GTA V"],["The Legend of Zelda",1986,45000,"Zelda"],["Pac-Man",1980,45000,"Pacman"],["World of Warcraft",2004,45000,"WoW"],["Pokémon Rot und Blau",1996,40000,"Pokemon"],["The Sims",2000,35000,"Die Sims"],["Counter-Strike",1999,30000],["Sonic the Hedgehog",1991,30000,"Sonic"],["Donkey Kong",1981,25000],["Doom",1993,25000],["Tetris",1984,25000],["Among Us",2018,20000],["Portal",2007,18000],["Space Invaders",1978,18000],["Animal Crossing: New Horizons",2020,15000,"Animal Crossing"],["Pong",1972,15000],["Stardew Valley",2016,14000],["Prince of Persia",1989,9000],["Myst",1993,8000],["Lemmings",1991,6000],["Elite",1984,4500],["Pitfall!",1982,4000,"Pitfall"]])},
+{id:'stadt',cat:'Städte in Deutschland',sg:'Stadt in Deutschland',g:'f',typed:1,items:mk([["Berlin",0,99000],["Hamburg",0,90000],["München",0,88000],["Köln",0,85000],["Frankfurt am Main",0,80000,"Frankfurt"],["Stuttgart",0,65000],["Düsseldorf",0,62000],["Leipzig",0,60000],["Dresden",0,55000],["Dortmund",0,55000],["Essen",0,52000],["Bremen",0,50000],["Hannover",0,50000],["Nürnberg",0,50000],["Duisburg",0,40000],["Bonn",0,38000],["Münster",0,36000],["Bochum",0,35000],["Karlsruhe",0,33000],["Wuppertal",0,32000],["Bielefeld",0,32000],["Mannheim",0,32000],["Augsburg",0,30000],["Wiesbaden",0,30000],["Mainz",0,28000],["Kiel",0,26000],["Rostock",0,25000],["Trier",0,22000],["Bamberg",0,20000],["Kaiserslautern",0,18000],["Lüneburg",0,14000],["Passau",0,14000],["Görlitz",0,12000],["Quedlinburg",0,9000],["Wernigerode",0,8000],["Bautzen",0,7000],["Cuxhaven",0,6000],["Husum",0,5000],["Meppen",0,3000]])},
+{id:'tier',cat:'Tiere',sg:'Tier',g:'n',typed:1,items:mk([["Hund",0,100000],["Katze",0,95000],["Pferd",0,80000],["Elefant",0,70000],["Löwe",0,70000],["Wolf",0,60000],["Delfin",0,55000],["Fuchs",0,50000],["Pinguin",0,50000],["Giraffe",0,45000],["Eisbär",0,45000],["Känguru",0,45000],["Hai",0,45000],["Krokodil",0,42000],["Koala",0,40000],["Panda",0,40000,"Großer Panda"],["Blauwal",0,40000,"Wal"],["Adler",0,40000],["Eule",0,38000],["Igel",0,38000],["Hase",0,35000],["Reh",0,30000],["Wildschwein",0,30000],["Axolotl",0,25000],["Otter",0,22000],["Faultier",0,22000],["Dachs",0,20000],["Erdmännchen",0,20000],["Schnabeltier",0,20000],["Narwal",0,18000],["Tapir",0,14000],["Wombat",0,11000],["Okapi",0,9000],["Nacktmull",0,9000],["Schuppentier",0,9000,"Pangolin"],["Seekuh",0,8000],["Quokka",0,6000],["Fossa",0,5000],["Aye-Aye",0,4000,"Fingertier"],["Rüsselspringer",0,2500]])}
+];
+const BASE=LISTS.slice();
+// ---------- Hilfen ----------
+const $=s=>document.querySelector(s),app=$('#app');
+const esc=t=>String(t??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fm=n=>Math.round(n||0).toLocaleString('de-DE'),sec=ms=>(Math.max(0,ms)/1000).toLocaleString('de-DE',{minimumFractionDigits:1,maximumFractionDigits:1})+' s';
+const today=()=>new Intl.DateTimeFormat('sv-SE',{timeZone:'Europe/Berlin'}).format(new Date());
+const rng=seed=>{let h=1779033703^seed.length;for(let i=0;i<seed.length;i++){h=Math.imul(h^seed.charCodeAt(i),3432918353);h=h<<13|h>>>19;}let a=h>>>0;return()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};};
+const pick=(r,a)=>a[Math.floor(r()*a.length)],shuf=(r,a)=>{a=[...a];for(let i=a.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const norm=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/ß/g,'ss').replace(/&/g,'und').replace(/[^a-z0-9]+/g,' ').trim();
+const lev=(a,b)=>{let p=Array.from({length:b.length+1},(_,j)=>j);for(let i=1;i<=a.length;i++){const c=[i];for(let j=1;j<=b.length;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c;}return p[b.length];};
+const tol=s=>s.length>=9?2:s.length>=5?1:0;
+function match(l,t){t=norm(t);if(!t)return null;let best=null,bd=9;for(const it of l.items)for(const n of [it.n,...it.a]){const x=norm(n),d=lev(t,x);if(d<=tol(x)&&d<bd){best=it;bd=d;}}return best;}
+const RK={};const rarity=(l,it)=>{if(!RK[l.id]){const s=[...l.items].sort((a,b)=>b.v-a.v);RK[l.id]=new Map(s.map((x,i)=>[x.n,i/(s.length-1)]));}return RK[l.id].get(it.n);};
+const fv=it=>it.live?'in '+it.v+' Wikipedia-Sprachversionen':'ca. '+fm(it.v)+' Aufrufe/Monat (geschätzt)';
+// ---------- Fragen ----------
+function makeTyped(r,used,goal,av){const c=LISTS.filter(l=>l.typed&&l.id!==av).map(l=>{const k='t|'+l.id+'|'+goal;return{l,k,s:used[k]||0};});const m=Math.min(...c.map(x=>x.s)),x=pick(r,c.filter(y=>y.s===m)),l=x.l,g=l.g||'m';used[x.k]=m+1;
+ return{id:x.k+m,type:goal,input:1,cat:l.cat,lid:l.id,goal,prompt:`Nenne ${{m:'einen',n:'ein',f:'eine'}[g]} ${l.sg}, ${{m:'den',n:'das',f:'die'}[g]} ${goal==='rare'?'kaum jemand nennt.':'fast jeder kennt.'}`,
+ note:goal==='rare'?'Je unbekannter dein Treffer, desto mehr Höhe.':'Je bekannter dein Treffer, desto mehr Höhe.'};}
+function makeChoice(type,r,d,used,av){const yrs=type==='earlier'||type==='later',all=LISTS.filter(l=>l.items.length>=8&&(!yrs||l.items.every(i=>i.y))),f=all.filter(l=>l.id!==av),ls=f.length?f:all;let best=null;
+ for(let t=0;t<40;t++){const l=pick(r,ls),n=l.items.length,it=[...l.items].sort((a,b)=>yrs?a.y-b.y:b.v-a.v);const gap=Math.max(1,Math.min([Math.floor((n-1)/3),Math.max(2,Math.floor((n-1)/6)),1][d-1],Math.floor((n-1)/3)));
+  const i0=Math.floor(r()*(n-3*gap)),q=[0,1,2,3].map(j=>it[i0+j*gap]);if(new Set(q.map(i=>yrs?i.y:i.v)).size<4)continue;
+  const s=q.reduce((a,i)=>a+(used['i|'+l.id+i.n]||0),0);if(!best||s<best.s)best={l,q,s};if(!s)break;}
+ if(!best)return null;const{l,q}=best;q.forEach(i=>{const k='i|'+l.id+i.n;used[k]=(used[k]||0)+1;});const v=i=>yrs?i.y:i.v;
+ const w=(type==='earlier'||type==='rare')?q.reduce((a,b)=>v(b)<v(a)?b:a):q.reduce((a,b)=>v(b)>v(a)?b:a);
+ const o=shuf(r,q).map((i,k)=>({id:'abcd'[k],label:i.n,dv:yrs?String(i.y):fv(i),it:i}));
+ const ord=[...q].sort((a,b)=>yrs?a.y-b.y:b.v-a.v).map(i=>i.n+' ('+(yrs?i.y:fv(i))+')').join(' · ');
+ return{id:'c'+Math.floor(r()*1e9),type,lid:l.id,cat:l.cat,d,prompt:{earlier:'Welcher davon kam zuerst?',later:'Welcher davon kam zuletzt?',common:'Welcher davon ist am bekanntesten?',rare:'Welcher davon ist am unbekanntesten?'}[type],note:'Kategorie: '+l.cat+(yrs?'':'. Maßstab: '+(l.items[0].live?'Zahl der Wikipedia-Sprachversionen.':'Wikipedia-Aufrufe (geschätzt).')),opts:o,cid:o.find(x=>x.it===w).id,expl:(yrs?'Von früh nach spät: ':'Von bekannt nach selten: ')+ord+'.'};}
+// Tagesflug: jede vierte Frage zum Eintippen, dazwischen Auswahlfragen. Nie zweimal dieselbe Art oder Liste direkt hintereinander.
+function dayQs(day){const r=rng('tag|'+day),u={},qs=[];let lg='',lc='',ll='';
+ for(let i=0;i<40;i++){const d=i<8?1:i<20?2:3;let q=null;
+  if(i%4===0){const g=lg==='rare'?'common':lg==='common'?'rare':pick(r,['rare','common']);q=makeTyped(r,u,g,ll);lg=g;ll=q.lid;}
+  else{const t=pick(r,['earlier','later','common','rare'].filter(x=>x!==lc));q=makeChoice(t,r,d,u,ll);if(q){lc=t;ll=q.lid;}}
+  if(q){q.d=d;qs.push(q);}}return qs;}
+// ---------- Speicher ----------
+const KEY='hoehenflug-v1';let P={daily:null,hist:[]};try{P={...P,...JSON.parse(localStorage.getItem(KEY)||'{}')};}catch{}
+const store=()=>{try{localStorage.setItem(KEY,JSON.stringify(P));}catch{}};
+const saveDaily=()=>{if(R.kind==='daily'){const{qs,...rest}=R;P.daily={date:R.date,r:rest};store();}};
+// ---------- Himmel ----------
+const cv=$('#sky'),cx=cv.getContext('2d'),reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;let W,H,clouds=[],stars=[],dispAlt=0,crashT=0,boost=0;
+const PL=["...........ww.........","..........wwww........","..rr.....wwwwww.......","..rrr...wwwwwwwww.....","..wwwwwwwwwwwwwwwwwc..","wwwwwwwwwwwwwwwwwwwwcc","..wwwwwwwwwwwwwwwwwc..","......bbbwwwwww.......","......bbb............."],PC={w:'#f4fbff',r:'#ff8cab',c:'#7ee5df',b:'#5b8fb0'};
+function size(){W=Math.ceil(innerWidth/4);H=Math.ceil(innerHeight/4);cv.width=W;cv.height=H;clouds=Array.from({length:9},()=>({x:Math.random()*W,y:Math.random()*H*.8,s:.2+Math.random()*.5,w:10+Math.random()*16}));stars=Array.from({length:50},()=>({x:Math.random()*W,y:Math.random()*H}));}
+const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim(),hx=h=>{h=h.replace('#','');return[0,2,4].map(i=>parseInt(h.substr(i,2),16));},mix=(a,b,t)=>'rgb('+a.map((v,i)=>Math.round(v+(b[i]-v)*t)).join(',')+')';
+function draw(now){requestAnimationFrame(draw);dispAlt+=(((R&&R.alt)||0)-dispAlt)*.04;const t=Math.min(1,dispAlt/12000),a=hx(css('--sky-a')||'#6ab8ea'),b=hx(css('--sky-b')||'#d6f1ff'),sp=1+Math.min(4,((R&&R.correct)||0)*.1)+boost;boost*=.95;
+ const g=cx.createLinearGradient(0,0,0,H);g.addColorStop(0,mix(a,[3,8,20],t*.9));g.addColorStop(1,mix(b,[20,45,80],t*.8));cx.fillStyle=g;cx.fillRect(0,0,W,H);
+ if(t>.35){cx.fillStyle='#ffffffaa';stars.forEach(s=>cx.fillRect(s.x|0,s.y|0,1,1));}
+ cx.fillStyle='#ffffffb0';clouds.forEach(c=>{if(!reduce)c.x-=c.s*sp*.4;if(c.x<-c.w)c.x=W+c.w;const y=c.y|0;cx.fillRect(c.x|0,y,c.w|0,3);cx.fillRect((c.x+3)|0,y-2,(c.w*.5)|0,2);});
+ const gh=Math.max(0,(300-dispAlt)/300)*H*.3;if(gh>0){cx.fillStyle='#3d7a4a';cx.fillRect(0,H-gh,W,gh+1);}
+ let py=36+(reduce?0:Math.sin(now/600)*2),px=W*.5,rot=0;if(crashT){const k=Math.min(1,(now-crashT)/1800);py=36+k*k*(H*.82-36);rot=k*1.2;px+=k*10;}
+ cx.save();cx.translate(px|0,py|0);cx.rotate(rot);[1,0].forEach(sh=>PL.forEach((row,y)=>[...row].forEach((ch,x)=>{if(PC[ch]){cx.fillStyle=sh?'#0b2236aa':PC[ch];cx.fillRect((x-11)*2+sh,(y-4)*2+sh,2,2);}})));cx.restore();}
+addEventListener('resize',size);
+// ---------- Spielzustand ----------
+let R=null,clock=0,busy=false;
+const MODES=[['mix','Mix','Alles'],['common','Häufig','Bekannter?'],['rare','Selten','Unbekannter?'],['earlier','Früher','Zuerst?'],['later','Später','Zuletzt?']];let selMode='mix';const prem=()=>{try{return location.hash==='#premium';}catch{return false;}};
+const limitMs=r=>{const d=r.kind==='daily';let ms=Math.max(d?8:6,(d?20:18)-.25*r.correct)*1000;if(r.danger>0)ms=Math.max(4000,ms*.65);return Math.round(ms);};
+function hud(){$('#hud').hidden=!(R&&view==='q'||view==='crash');if(!R)return;$('#hh').textContent=fm(R.alt);$('#hs').textContent=R.correct+' RICHTIG';$('#hm').textContent=R.kind==='daily'?'TAGESFLUG':(MODES.find(m=>m[0]===R.mode)||MODES[0])[1].toUpperCase();$('#hc').textContent=R.kind==='daily'?'HÖHENRESERVE':R.danger>=2?'LETZTE CHANCE':R.danger?'RETTUNGSFENSTER':'STABIL';$('#hp').textContent=R.score;$('#ht').textContent=sec(R.limit);}
+let view='home';const show=(v,h)=>{cancelAnimationFrame(clock);view=v;app.innerHTML=h;scrollTo(0,0);hud();};
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('s');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('s'),3000);}
+// ---------- Startseite ----------
+function home(){crashT=0;R=null;const dn=P.daily&&P.daily.date===today()?P.daily.r:null,done=dn&&dn.status==='crashed',hist=P.hist||[],best=Math.max(0,...hist.map(h=>h.peak));
+ show('home',`<section class="hero"><p class="eyebrow">Leicht reinkommen. Hoch hinausfliegen.</p><h1>HÖHEN<br>FLUG<span style="color:var(--coral)">.</span></h1><p>Alltagswissen, steigende Schwierigkeit, schrumpfende Zeit. Eine Chance zur Rettung.</p></section>
+<button class="btn daily panel" id="d"><b>TAGESFLUG</b><span>Ein Versuch pro Tag · Start auf 1.500 m · Antworten eintippen</span><em>${done?'HEUTIGES ERGEBNIS ANSEHEN':dn?'TAGESFLUG FORTSETZEN':'HEUTIGEN VERSUCH STARTEN'}</em></button>
+<div class="panel"><p class="eyebrow">Freie Flüge · unbegrenzt</p><div class="modes">${MODES.map(m=>{const lk=m[0]!=='mix'&&!prem();return `<button class="mode" data-m="${m[0]}" aria-pressed="${selMode===m[0]}">${lk?'🔒 ':''}${m[1]}<small>${lk?'Premium · 5 €':m[2]}</small></button>`;}).join('')}</div><button class="btn big coral" id="f" ${done?'':'disabled'}>FREIEN FLUG STARTEN</button>${done?'':'<p class="lock">Freigeschaltet, sobald dein Tagesflug beendet ist.</p>'}</div>
+<div class="panel"><p class="eyebrow">Deine Rekorde (auf diesem Gerät)</p><p>Höchster Flug: <b style="color:var(--cyan)">${fm(best)} m</b> · ${hist.length} beendete Flüge</p></div>
+<details class="panel"><summary>Flugschule</summary><p><b>Tagesflug:</b> Jeden Tag neue Fragen für alle, ein Versuch. Du startest auf 1.500 m, jeder Fehler kostet 350 m. Beim Eintippen zählt, wie selten (oder bekannt) dein Treffer ist.</p><p><b>Freie Flüge:</b> Mix ist kostenlos, die anderen Modi kommen mit Premium. Start bei 0 m. Nach einem Fehler beginnt der Sinkflug, nach dem zweiten hast du eine letzte Chance, der dritte Fehler in Folge beendet den Flug. Eine richtige Antwort fängt das Flugzeug ab.</p><p><b>Zeit:</b> 20 s im Tagesflug, 18 s im freien Flug, jede richtige Antwort verkürzt das Fenster um 0,25 s. Tasten 1 bis 4 wählen Antworten.</p><p><b>Fragen:</b> Jeden Tag gibt es neue Kategorien aus Wikidata. Bekanntheit heißt: in wie vielen Sprachversionen Wikipedia den Eintrag hat. Beim Eintippen zählt, was in der Datenbasis steht (die bekanntesten bis zu 400 Einträge je Kategorie).</p></details>
+<p class="foot">Rekorde und Tagesflug werden nur in diesem Browser gespeichert. Datenquelle: Wikidata (CC0).</p>`);
+ $('#d').onclick=()=>startRun('daily');document.querySelectorAll('.mode').forEach(b=>b.onclick=()=>{if(b.dataset.m!=='mix'&&!prem()){toast('Premium-Modus: Die Freischaltung für 5 € kommt bald.');return;}selMode=b.dataset.m;document.querySelectorAll('.mode').forEach(x=>x.setAttribute('aria-pressed',x===b));});$('#f').onclick=()=>startRun('free');}
+// ---------- Tagesdaten aus data/days/DATUM.json (täglich per GitHub Actions aus Wikidata erzeugt) ----------
+async function loadToday(){try{const r=await fetch('data/days/'+today()+'.json',{cache:'no-store'});if(!r.ok)return false;const j=await r.json();if(!Array.isArray(j.cats)||j.cats.length<4)return false;
+ LISTS=j.cats.map(c=>({id:c.id,cat:c.cat,sg:c.sg,g:c.g,typed:!!c.typed,items:c.items.map(i=>({n:i.n,y:i.y||0,v:i.v,a:[],live:1}))}));return true;}catch{return false;}}
+const newRun=(kind,date)=>kind==='daily'?{kind,mode:'daily',date,alt:1500,start:1500,peak:1500,idx:0,danger:0,score:0,correct:0,streak:0,status:'ready',deadline:0,seed:'tag|'+date,used:{},u:{},qi:-1}:{kind,mode:prem()?selMode:'mix',date,alt:0,start:0,peak:0,idx:0,danger:0,score:0,correct:0,streak:0,status:'ready',deadline:0,seed:'f'+Date.now(),used:{},u:{},qi:-1};
+function liveQ(){const i=R.idx,d=i<8?1:i<20?2:3,g=rng(R.seed+'|'+i);let q=null;
+ if(i%4===0&&LISTS.some(l=>l.typed&&l.id!==R.ll)){const goal=R.lg==='rare'?'common':R.lg==='common'?'rare':pick(g,['rare','common']);q=makeTyped(g,R.u,goal,R.ll);R.lg=goal;}
+ if(!q){const ts=shuf(g,['earlier','later','common','rare'].filter(x=>x!==R.lc));if(R.lc)ts.push(R.lc);for(const t of ts){q=makeChoice(t,g,d,R.u,R.ll);if(q){R.lc=t;break;}}}
+ if(q){R.ll=q.lid;q.d=d;}return q;}
+async function startRun(kind){const date=today();
+ if(kind==='daily'&&P.daily&&P.daily.date===date){R={...P.daily.r};if(R.status==='crashed'){R.limit=limitMs(R);return results();}if(R.live&&R.cats)LISTS=R.cats;else{LISTS=BASE;R.qs=dayQs(date);}dispAlt=R.alt;return nextQ();}
+ R=newRun(kind,date);show('load','<section class="panel res"><p class="eyebrow">Flugplan</p><h1>Fragen werden geladen …</h1></section>');R.live=await loadToday();if(R.live)R.cats=LISTS;else{LISTS=BASE;if(kind==='daily')R.qs=dayQs(date);}dispAlt=R.alt;nextQ();}
+function nextQ(){if(R.live&&R.kind==='daily'){if(!R.q||R.qi!==R.idx){R.q=liveQ();R.qi=R.idx;}}else if(R.kind==='daily')R.q=R.qs[R.idx];
+ else{const g=rng(R.seed+'|'+R.idx),d=R.idx<8?1:R.alt<5000?2:3;R.q=null;for(const t of shuf(g,R.mode==='mix'?['common','rare','earlier','later']:[R.mode,'common','rare'])){R.q=makeChoice(t,g,d,R.used,'');if(R.q){R.q.d=d;break;}}}
+ if(!R.q||(R.kind==='daily'&&R.idx>=40))return finish('done');R.limit=limitMs(R);if(!R.deadline)R.deadline=Date.now()+R.limit;saveDaily();renderQ();}
+function renderQ(){const q=R.q;busy=false;const dl=['LEICHT','MITTEL','SCHWER'][q.d-1];
+ show('q',`<section class="panel"><span class="tag">${{rare:'Selten',common:'Häufig',earlier:'Früher',later:'Später'}[q.type]} · ${esc(q.cat)}</span><span class="badge">${dl}</span><h1 class="q" tabindex="-1">${esc(q.prompt)}</h1><p class="note">${esc(q.note)}</p>
+ ${R.danger?`<div class="rec">${R.danger>=2?'LETZTE CHANCE: Jetzt richtig antworten und das Flugzeug abfangen.':'RETTUNGSFENSTER: Eine richtige Antwort stabilisiert deinen Flug.'}</div>`:''}
+ ${q.input?`<div class="typed"><input id="ti" maxlength="60" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Antwort eintippen …" aria-label="Deine Antwort"><button class="btn" id="ts">SENDEN</button></div>`:`<div class="grid" role="group" aria-label="Eine Antwort wählen">${q.opts.map((o,i)=>`<button class="ch" data-c="${o.id}"><i>${i+1}</i><span>${esc(o.label)}</span></button>`).join('')}</div>`}
+ <div class="tinfo"><span>Antworte, bevor der Auftrieb fehlt.</span><b id="tc">${sec(R.limit)}</b></div><div class="timer"><i id="tb"></i></div><div id="fb" role="status" aria-live="polite"></div></section>`);
+ document.querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>answer(b.dataset.c));
+ if(q.input){const i=$('#ti');$('#ts').onclick=()=>answer(null,i.value);i.addEventListener('keydown',e=>{if(e.key==='Enter')answer(null,i.value);});setTimeout(()=>i.focus(),60);}
+ const tick=()=>{const left=R.deadline-Date.now();$('#tc').textContent=sec(left);$('#tb').style.transform=`scaleX(${Math.max(0,Math.min(1,left/R.limit))})`;$('#tb').className=left<=Math.min(5000,R.limit*.4)?'u':'';$('#ht').textContent=sec(left);if(left<=0)return answer(null,'',1);clock=requestAnimationFrame(tick);};tick();}
+addEventListener('keydown',e=>{if(view==='q'&&!busy&&!R.q.input&&/^[1-4]$/.test(e.key)){const o=R.q.opts[+e.key-1];if(o)answer(o.id);}});
+async function answer(cid,text,expired){if(busy)return;busy=true;cancelAnimationFrame(clock);const q=R.q,left=Math.max(0,R.deadline-Date.now())/R.limit,d=R.kind==='daily',prev=R.danger;
+ let ok=false,gain=0,why=expired?'Die Zeit ist abgelaufen.':'',sel=null,corr,opts;
+ if(q.input){const l=LISTS.find(x=>x.id===q.lid),top=[...l.items].sort((a,b)=>q.goal==='rare'?a.v-b.v:b.v-a.v).slice(0,3);corr='z. B. '+top.map(i=>i.n).join(', ');opts=top.map(i=>[i.n,fv(i)]);
+  if(!expired){const it=match(l,text);if(!it)why=`„${String(text).slice(0,40)}“ steht nicht in der Datenbasis. Es zählen nur echte Treffer.`;else{let s=rarity(l,it);if(q.goal==='common')s=1-s;ok=s>=.4;sel=it.n;gain=100+Math.round(450*s)+Math.round(50*left);why=`${it.n}: ${q.goal==='rare'?'Seltenheit':'Bekanntheit'} ${Math.round(s*100)} %. ${ok?'Treffer.':'Ab 40 % zählt es als Treffer.'}`;}}}
+ else{const o=!expired&&q.opts.find(x=>x.id===cid);sel=o?o.label:null;ok=!!o&&o.id===q.cid;if(ok)gain=[150,250,400][q.d-1]+Math.round(100*left);corr=q.opts.find(x=>x.id===q.cid).label;opts=q.opts.map(x=>[x.label,x.dv]);why=q.expl;
+  document.querySelectorAll('[data-c]').forEach(b=>{b.disabled=true;b.classList.toggle('ok',b.dataset.c===q.cid);b.classList.toggle('no',!!o&&b.dataset.c===o.id&&o.id!==q.cid);});}
+ if(q.input){$('#ti').disabled=true;$('#ts').disabled=true;}
+ const loss=d?350:250,pts=ok?Math.round(gain/10):0;
+ if(ok){R.alt+=gain;R.peak=Math.max(R.peak,R.alt);R.score+=pts;R.streak++;R.correct++;R.danger=0;boost=3;}else{R.alt=Math.max(0,R.alt-loss);R.streak=0;if(!d)R.danger++;}
+ R.idx++;R.deadline=0;R.last={prompt:q.prompt,corr,sel,why,opts,ok};const dead=!ok&&(d?R.alt<=0:R.danger>=3);if(dead){R.status='crashed';R.reason=expired?'timeout':'wrong';}saveDaily();
+ hud();const f=$('#fb');f.className='fb '+(ok?'':dead?'d':'w');
+ f.innerHTML=ok?`<strong>${prev?'ABGEFANGEN':'RICHTIG'} · +${fm(gain)} m</strong>+${pts} Punkte`:`<strong>−${fm(loss)} m · ${dead?'ABSTURZ':d?'HÖHE VERLOREN':R.danger>=2?'LETZTE CHANCE':'IM SINKFLUG'}</strong>${esc(why)}<br>Richtig: ${esc(corr)}`;
+ setTimeout(()=>dead?finish():nextQ(),reduce?300:ok?1100:2200);}
+function finish(){if(R.status!=='crashed'){R.status='crashed';R.reason='done';}R.limit=limitMs(R);const e={date:R.date,mode:R.mode,kind:R.kind,peak:R.peak,correct:R.correct,score:R.score};if(R.kind==='free'||!(P.hist||[]).some(h=>h.kind==='daily'&&h.date===R.date))P.hist=[e,...(P.hist||[])].slice(0,100);saveDaily();store();
+ crashT=performance.now();show('crash',`<div class="crash" role="alert"><p class="eyebrow">Kein Auftrieb mehr</p><b>ABSTURZ</b><span>${R.kind==='daily'?'Deine Höhenreserve ist aufgebraucht.':R.reason==='timeout'?'Die Zeit ist abgelaufen.':'Die Rettung ist nach drei Fehlern misslungen.'}</span></div>`);setTimeout(results,reduce?400:2300);}
+function results(){crashT=performance.now()-5000;const d=R.kind==='daily',n=R.correct,l=R.last,rank=n>=30?'Legende der Lüfte':n>=20?'Himmelsstürmer:in':n>=10?'Wolken-Profi':n>=5?'Pilot:in mit Weitblick':'Bereit für den nächsten Start',top=(P.hist||[]).slice().sort((a,b)=>b.peak-a.peak).slice(0,5);
+ show('res',`<section class="panel res"><p class="eyebrow">${d?'Tagesflug':'Flug'} beendet</p><h1 tabindex="-1">${rank}</h1><div class="depth">${fm(R.peak)} <small>Meter</small></div><p class="note">Höchster Punkt${d?' · '+fm(Math.max(0,R.peak-1500))+' m über der Starthöhe':''}</p>
+ <div class="met"><div><strong>${n}</strong><span>richtig</span></div><div><strong>${R.score}</strong><span>Punkte</span></div><div><strong>${sec(R.limit)}</strong><span>letztes Zeitfenster</span></div></div>
+ ${l?`<details class="det" open><summary>Die letzte Frage auflösen</summary><p>${esc(l.prompt)}</p><p><b style="color:var(--cyan)">Richtig: ${esc(l.corr)}</b></p>${l.sel?`<p>Deine Antwort: ${esc(l.sel)}</p>`:''}<p>${esc(l.why)}</p><ul>${l.opts.map(o=>`<li><span>${esc(o[0])}</span><b>${esc(o[1])}</b></li>`).join('')}</ul></details>`:''}
+ ${top.length?`<details class="det"><summary>Deine besten Flüge</summary><ul>${top.map((h,i)=>`<li><span>${i+1}. ${h.kind==='daily'?'Tagesflug':'Frei'} · ${esc(h.date)}</span><b>${fm(h.peak)} m</b></li>`).join('')}</ul></details>`:''}
+ <button class="btn big coral" id="r">${d?'FREIEN FLUG STARTEN':'NOCH EIN FLUG'}</button><br><button class="btn" id="s">REKORD TEILEN</button><br><button class="btn" id="h">ZUR FLUGSTATION</button></section>`);
+ $('#r').onclick=()=>{selMode=d?'mix':R.mode;startRun('free');};$('#h').onclick=home;$('#s').onclick=async()=>{const t=`HÖHENFLUG · ${d?'Tagesflug':'Freier Flug'}\n✈️ ${fm(R.peak)} m · ${n} richtige Antworten · ${R.score} Punkte`;try{await navigator.clipboard.writeText(t);toast('Dein Flugrekord wurde kopiert.');}catch{toast('Kopieren ist hier nicht möglich.');}};}
+// ---------- Start ----------
+size();requestAnimationFrame(draw);
+home();
+</script></body></html>
