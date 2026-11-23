@@ -107,11 +107,83 @@ const KEY='hoehenflug-v1';let P={daily:null,hist:[]};try{P={...P,...JSON.parse(l
 const store=()=>{try{localStorage.setItem(KEY,JSON.stringify(P));}catch{}};
 const saveDaily=()=>{if(R.kind==='daily'){const{qs,...rest}=R;P.daily={date:R.date,r:rest};store();}};
 // ---------- Himmel ----------
-const cv=$('#sky'),cx=cv.getContext('2d'),reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;let W,H,clouds=[],stars=[],dispAlt=0,crashT=0,flightChange=null;
+const cv=$('#sky'),cx=cv.getContext('2d'),reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;let W,H,clouds=[],stars=[],dispAlt=0,crashT=0,crashPose=null,flightChange=null;
 const heightReadout=$('#hh'),flightStatus=$('#hc');
 const smoothstep=t=>t*t*(3-2*t);
-const PL=["...........ww.........","..........wwww........","..rr.....wwwwww.......","..rrr...wwwwwwwww.....","..wwwwwwwwwwwwwwwwwc..","wwwwwwwwwwwwwwwwwwwwcc","..wwwwwwwwwwwwwwwwwc..","......bbbwwwwww.......","......bbb............."],PC={w:'#f4fbff',r:'#ff8cab',c:'#7ee5df',b:'#5b8fb0'};
-function size(){W=Math.ceil(innerWidth/4);H=Math.ceil(innerHeight/4);cv.width=W;cv.height=H;clouds=Array.from({length:9},()=>({x:Math.random()*W,y:Math.random()*H*.8,s:.2+Math.random()*.5,w:10+Math.random()*16}));stars=Array.from({length:50},()=>({x:Math.random()*W,y:Math.random()*H}));}
+function drawAircraft(){
+ const metal=cx.createLinearGradient(0,-5,0,6);
+ metal.addColorStop(0,'#f8fafc');
+ metal.addColorStop(.45,'#e2e8ef');
+ metal.addColorStop(1,'#71869b');
+
+ // Far wing, tailplane and vertical stabilizer.
+ cx.fillStyle='#92a8ba';
+ cx.fill(new Path2D('M 4 -2 L -7 -15 Q -9 -16 -13 -15 L -8 -1 Z M -16 0 L -25 -7 L -27 -6 L -23 1 Z'));
+ cx.fillStyle='#244e69';
+ cx.fill(new Path2D('M -26 0 L -30 -13 Q -29 -15 -25 -14 L -16 -2 Z'));
+
+ // Low-wing propeller aircraft, seen slightly from above.
+ cx.fillStyle=metal;
+ cx.strokeStyle='#344f65';
+ cx.lineWidth=.55;
+ const fuselage=new Path2D('M -29 0 Q -18 -2 -10 -3 L -5 -7 Q 3 -9 9 -5 L 14 -3 Q 24 -3 27 0 L 27 3 Q 25 5 16 5 L -5 5 Q -20 4 -29 2 Z');
+ cx.fill(fuselage);
+ cx.stroke(fuselage);
+ cx.fillStyle='#243f53';
+ cx.fill(new Path2D('M -7 -3 L -4 -6 Q 1 -7 4 -6 L 4 -3 Z M 5 -6 Q 8 -5 11 -3 L 5 -3 Z'));
+ cx.fillStyle='#27647c';
+ cx.fill(new Path2D('M -28 1 Q -14 2 0 1 L 26 1 L 25 2.5 L 0 2.5 Q -15 3 -28 2 Z'));
+ cx.fillStyle=metal;
+ const wing=new Path2D('M 8 1 L -9 14 Q -12 16 -18 14 L -8 2 Z');
+ cx.fill(wing);
+ cx.stroke(wing);
+
+ cx.strokeStyle='#90adbfaa';
+ cx.lineWidth=1.2;
+ cx.beginPath();
+ cx.ellipse(28,1,.9,7.5,0,0,Math.PI*2);
+ cx.stroke();
+ cx.fillStyle='#415969';
+ cx.fill(new Path2D('M 26 -1 Q 30 -1 30 1 Q 30 3 26 3 Z'));
+}
+
+const clamp01=t=>Math.max(0,Math.min(1,t));
+const lerp=(a,b,t)=>a+(b-a)*t;
+const crashDuration=2350;
+
+function flightPose(now){
+ if(reduce)return {x:0,y:0,angle:0};
+ if(crashT&&crashPose){
+  const t=clamp01((now-crashT)/crashDuration);
+  // Carry the plane forward over the crest before accelerating down.
+  const arc=-13*Math.sin(Math.PI*t);
+  return {
+   x:crashPose.x+W*.26*t,
+   y:lerp(crashPose.y,Math.max(28,H*.88-36),t*t*t)+arc,
+   angle:t<.22?lerp(crashPose.angle,-.24,smoothstep(t/.22)):lerp(-.24,1.24,smoothstep((t-.22)/.78))
+  };
+ }
+ if(!flightChange){
+  const sinking=R?.last?.ok===false;
+  return {x:0,y:sinking?9:0,angle:sinking ? .13 : 0};
+ }
+ const {phase,started,duration,pose}=flightChange;
+ const t=clamp01((now-started)/duration);
+ const ease=smoothstep(t);
+ if(phase==='sink'){
+  const drift=clamp01((now-started-duration)/6500);
+  return {x:lerp(pose.x,-3,ease),y:lerp(pose.y,11,ease)+5*drift,angle:lerp(pose.angle,.22,ease)-.09*drift};
+ }
+ if(phase==='recover'){
+  return {x:lerp(pose.x,0,ease),y:lerp(pose.y,1,ease)+3*Math.sin(Math.PI*t),angle:lerp(pose.angle,0,ease)};
+ }
+ return {
+  x:lerp(pose.x,0,ease)+4*Math.sin(Math.PI*t),
+  y:lerp(pose.y,-4,ease)-8*Math.sin(Math.PI*t),
+  angle:lerp(pose.angle,0,ease)-.33*Math.sin(Math.PI*t)
+ };
+}
+function size(){W=Math.ceil(innerWidth/4);H=Math.ceil(innerHeight/4);const scale=Math.min(8,4*(devicePixelRatio||1));cv.width=Math.ceil(W*scale);cv.height=Math.ceil(H*scale);cx.setTransform(cv.width/W,0,0,cv.height/H,0,0);clouds=Array.from({length:9},()=>({x:Math.random()*W,y:Math.random()*H*.8,s:.2+Math.random()*.5,w:10+Math.random()*16}));stars=Array.from({length:50},()=>({x:Math.random()*W,y:Math.random()*H}));}
 const css=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim(),hx=h=>{h=h.replace('#','');return[0,2,4].map(i=>parseInt(h.substr(i,2),16));},mix=(a,b,t)=>'rgb('+a.map((v,i)=>Math.round(v+(b[i]-v)*t)).join(',')+')';
 function draw(now){requestAnimationFrame(draw);
  const progress=flightChange?Math.max(0,Math.min(1,(now-flightChange.started)/flightChange.duration)):1;
@@ -121,26 +193,26 @@ function draw(now){requestAnimationFrame(draw);
   const height=fm(Math.round(dispAlt));
   if(heightReadout.textContent!==height)heightReadout.textContent=height;
  }
- const pitch=reduce||progress===1?0:flightChange.direction*Math.sin(Math.PI*progress);
+ const pose=flightPose(now),pitch=-pose.angle;
  const t=Math.min(1,dispAlt/12000),a=hx(css('--sky-a')||'#6ab8ea'),b=hx(css('--sky-b')||'#d6f1ff'),sp=1+Math.min(4,((R&&R.correct)||0)*.1)+Math.abs(pitch)*2;
  const g=cx.createLinearGradient(0,0,0,H);g.addColorStop(0,mix(a,[3,8,20],t*.9));g.addColorStop(1,mix(b,[20,45,80],t*.8));cx.fillStyle=g;cx.fillRect(0,0,W,H);
  if(t>.35){cx.fillStyle='#ffffffaa';stars.forEach(s=>cx.fillRect(s.x|0,s.y|0,1,1));}
  cx.fillStyle='#ffffffb0';clouds.forEach(c=>{if(!reduce)c.x-=c.s*sp*.4;if(c.x<-c.w)c.x=W+c.w;const y=(c.y+(reduce?0:Math.min(12,dispAlt/200)+pitch*4))|0;cx.fillRect(c.x|0,y,c.w|0,3);cx.fillRect((c.x+3)|0,y-2,(c.w*.5)|0,2);});
  const gh=Math.max(0,(300-dispAlt)/300)*H*.3;if(gh>0){cx.fillStyle='#3d7a4a';cx.fillRect(0,H-gh,W,gh+1);}
- let py=36,px=W*.5,rot=0;
- if(!reduce){
-  const altitudeOffset=R?Math.tanh((dispAlt-R.start)/1200)*5:0;
-  py+=Math.sin(now/600)*1.25-altitudeOffset-pitch*(pitch<0?10:7);
-  rot=-pitch*.36;
-  if(crashT){const k=Math.max(0,Math.min(1,(now-crashT)/1800));py+=(Math.max(36,H*.82)-py)*k*k;rot=k*1.2;px+=k*10;}
- }
- cx.save();cx.translate(px|0,py|0);cx.rotate(rot);[1,0].forEach(sh=>PL.forEach((row,y)=>[...row].forEach((ch,x)=>{if(PC[ch]){cx.fillStyle=sh?'#0b2236aa':PC[ch];cx.fillRect((x-11)*2+sh,(y-4)*2+sh,2,2);}})));cx.restore();}
+ cx.save();
+ const shortScreen=Math.min(0,H*.5-38);
+ cx.translate(W*.5+pose.x,36+pose.y+(crashT?0:shortScreen));
+ cx.rotate(pose.angle);
+ cx.scale(.72,.72);
+ drawAircraft();
+ cx.restore();
+}
 addEventListener('resize',size);
 // ---------- Spielzustand ----------
 let R=null,clock=0,busy=false;
 const MODES=[['mix','Mix','Alles'],['common','Häufig','Bekannter?'],['rare','Selten','Unbekannter?'],['earlier','Früher','Zuerst?'],['later','Später','Zuletzt?']];let selMode='mix';const prem=()=>{try{return location.hash==='#premium';}catch{return false;}};
 const STEP=r=>r.kind==='daily'?1.2:.4;const limitMs=r=>{const d=r.kind==='daily';let ms=Math.max(5,(d?16:14)-STEP(r)*r.idx)*1000;if(r.danger>0)ms=Math.max(4000,ms*.65);return Math.round(ms);};
-function hud(){$('#hud').hidden=!(R&&view==='q'||view==='crash');if(!R)return;heightReadout.textContent=fm(view==='q'?Math.round(dispAlt):R.alt);$('#hs').textContent=R.correct+' RICHTIG';$('#hm').textContent=R.kind==='daily'?'FRAGE '+Math.min(R.idx+1,10)+' VON 10':(MODES.find(m=>m[0]===R.mode)||MODES[0])[1].toUpperCase();$('#hc').textContent=R.kind==='daily'?'HÖHENRESERVE':R.danger>=2?'LETZTE CHANCE':R.danger?'RETTUNGSFENSTER':'STABIL';$('#hp').textContent=R.score;$('#ht').textContent=sec(R.limit);}
+function hud(){$('#hud').hidden=!(R&&view==='q'||view==='crash');if(!R)return;heightReadout.textContent=fm(view==='q'?Math.round(dispAlt):R.alt);$('#hs').textContent=R.correct+' RICHTIG';$('#hm').textContent=R.kind==='daily'?'FRAGE '+Math.min(R.idx+1,10)+' VON 10':(MODES.find(m=>m[0]===R.mode)||MODES[0])[1].toUpperCase();$('#hc').textContent=R.kind==='daily'?'HÖHENRESERVE':R.danger>=2?'LETZTE CHANCE':R.danger?'RETTUNGSFENSTER':'STABIL';if(view==='q'&&R.last?.ok===false)flightStatus.textContent='SINKFLUG';$('#hp').textContent=R.score;$('#ht').textContent=sec(R.limit);}
 let view='home';const show=(v,h)=>{cancelAnimationFrame(clock);view=v;app.innerHTML=h;scrollTo(0,0);hud();};
 function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('s');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('s'),3000);}
 // ---------- Startseite ----------
@@ -160,7 +232,7 @@ function liveQ(){const i=R.idx,d=i<3?1:i<7?2:3,g=rng(R.seed+'|'+i);let q=null;
  if([0,2,4].includes(i)&&LISTS.some(l=>l.typed&&l.id!==R.ll)){const goal=R.lg==='rare'?'common':R.lg==='common'?'rare':pick(g,['rare','common']);q=makeTyped(g,R.u,goal,R.ll);R.lg=goal;}
  if(!q){const ts=shuf(g,['earlier','later','common','rare'].filter(x=>x!==R.lc));if(R.lc)ts.push(R.lc);for(const t of ts){q=makeChoice(t,g,d,R.u,R.ll);if(q){R.lc=t;break;}}}
  if(q){R.ll=q.lid;q.d=d;}return q;}
-async function startRun(kind){const date=today();
+async function startRun(kind){crashT=0;crashPose=null;flightChange=null;const date=today();
  if(kind==='daily'&&P.daily&&P.daily.date===date){R={...P.daily.r};if(R.status==='crashed'){R.limit=limitMs(R);return results();}if(R.live&&R.cats)LISTS=R.cats;else{LISTS=BASE;R.qs=dayQs(date);}flightChange=null;dispAlt=R.alt;return nextQ();}
  R=newRun(kind,date);show('load','<section class="panel res"><p class="eyebrow">Flugplan</p><h1>Fragen werden geladen …</h1></section>');R.live=await loadToday();if(R.live)R.cats=LISTS;else{LISTS=BASE;if(kind==='daily')R.qs=dayQs(date);}flightChange=null;dispAlt=R.alt;nextQ();}
 function nextQ(){if(R.live&&R.kind==='daily'){if(!R.q||R.qi!==R.idx){R.q=liveQ();R.qi=R.idx;}}else if(R.kind==='daily')R.q=R.qs[R.idx];
@@ -175,24 +247,25 @@ function renderQ(){const q=R.q;busy=false;const dl=['LEICHT','MITTEL','SCHWER'][
  if(q.input){const i=$('#ti');$('#ts').onclick=()=>answer(null,i.value);i.addEventListener('keydown',e=>{if(e.key==='Enter')answer(null,i.value);});setTimeout(()=>i.focus(),60);}
  const tick=()=>{const left=R.deadline-Date.now();$('#tc').textContent=sec(left);$('#tb').style.transform=`scaleX(${Math.max(0,Math.min(1,left/R.limit))})`;$('#tb').className=left<=Math.min(5000,R.limit*.4)?'u':'';$('#ht').textContent=sec(left);$('#ht').style.color=left<5000?'var(--coral)':'';if(left<=0)return answer(null,'',1);clock=requestAnimationFrame(tick);};tick();}
 addEventListener('keydown',e=>{if(view==='q'&&!busy&&!R.q.input&&/^[1-4]$/.test(e.key)){const o=R.q.opts[+e.key-1];if(o)answer(o.id);}});
-async function answer(cid,text,expired){if(busy)return;busy=true;cancelAnimationFrame(clock);const q=R.q,left=Math.max(0,R.deadline-Date.now())/R.limit,d=R.kind==='daily',prev=R.danger;
+async function answer(cid,text,expired){if(busy)return;busy=true;cancelAnimationFrame(clock);const q=R.q,left=Math.max(0,R.deadline-Date.now())/R.limit,d=R.kind==='daily';
  let ok=false,gain=0,why=expired?'Die Zeit ist abgelaufen.':'',sel=null,corr,opts;
  if(q.input){const l=LISTS.find(x=>x.id===q.lid),top=[...l.items].sort((a,b)=>q.goal==='rare'?a.v-b.v:b.v-a.v).slice(0,3);corr='z. B. '+top.map(i=>i.n).join(', ');opts=top.map(i=>[i.n,fv(i)]);
   if(!expired){const it=match(l,text);if(!it)why=`„${String(text).slice(0,40)}“ steht nicht in der Datenbasis. Es zählen nur echte Treffer.`;else{let s=rarity(l,it);if(q.goal==='common')s=1-s;ok=s>=.4;sel=it.n;gain=100+Math.round(450*s)+Math.round(50*left);why=`${it.n}: ${q.goal==='rare'?'Seltenheit':'Bekanntheit'} ${Math.round(s*100)} %. ${ok?'Treffer.':'Ab 40 % zählt es als Treffer.'}`;}}}
  else{const o=!expired&&q.opts.find(x=>x.id===cid);sel=o?o.label:null;ok=!!o&&o.id===q.cid;if(ok)gain=[150,250,400][q.d-1]+Math.round(100*left);corr=q.opts.find(x=>x.id===q.cid).label;opts=q.opts.map(x=>[x.label,x.dv]);why=q.expl;
   document.querySelectorAll('[data-c]').forEach(b=>{b.disabled=true;b.classList.toggle('ok',b.dataset.c===q.cid);b.classList.toggle('no',!!o&&b.dataset.c===o.id&&o.id!==q.cid);});}
  if(q.input){$('#ti').disabled=true;$('#ts').disabled=true;}
- const previousAltitude=R.alt,loss=d?350:250,pts=ok?Math.round(gain/10):0;
- flightChange={from:previousAltitude,started:performance.now(),duration:ok?900:1400,direction:ok?1:-1};
+ const previousAltitude=R.alt,recovering=ok&&R.last?.ok===false,loss=d?350:250,pts=ok?Math.round(gain/10):0;
+ const started=performance.now(),pose=flightPose(started);
+ flightChange={from:previousAltitude,started,pose,duration:ok?1000:1500,phase:ok?(recovering?'recover':'climb'):'sink'};
  if(reduce)dispAlt=ok?previousAltitude+gain:Math.max(0,previousAltitude-loss);
  if(ok){R.alt+=gain;R.peak=Math.max(R.peak,R.alt);R.score+=pts;R.streak++;R.correct++;R.danger=0;}else{R.alt=Math.max(0,R.alt-loss);R.streak=0;if(!d)R.danger++;}
  R.idx++;R.deadline=0;R.last={prompt:q.prompt,corr,sel,why,opts,ok};const dead=!ok&&(d?R.alt<=0:R.danger>=3);if(dead){R.status='crashed';R.reason=expired?'timeout':'wrong';}saveDaily();
- hud();flightStatus.textContent=ok?'STEIGFLUG':dead?'ABSTURZ':'SINKFLUG';const f=$('#fb');f.className='fb '+(ok?'':dead?'d':'w');
- f.innerHTML=ok?`<strong>${prev?'ABGEFANGEN':'RICHTIG'} · +${fm(gain)} m</strong>+${pts} Punkte`:`<strong>−${fm(previousAltitude-R.alt)} m · ${dead?'ABSTURZ':d?'HÖHE VERLOREN':R.danger>=2?'LETZTE CHANCE':'IM SINKFLUG'}</strong>${esc(why)}<br>Richtig: ${esc(corr)}`;
+ hud();flightStatus.textContent=ok?(recovering?'STABILISIERT':'STEIGFLUG'):dead?'ABSTURZ':'SINKFLUG';const f=$('#fb');f.className='fb '+(ok?'':dead?'d':'w');
+ f.innerHTML=ok?`<strong>${recovering?'ABGEFANGEN':'RICHTIG'} · +${fm(gain)} m</strong>+${pts} Punkte`:`<strong>−${fm(previousAltitude-R.alt)} m · ${dead?'ABSTURZ':d?'HÖHE VERLOREN':R.danger>=2?'LETZTE CHANCE':'IM SINKFLUG'}</strong>${esc(why)}<br>Richtig: ${esc(corr)}`;
  setTimeout(()=>dead?finish():nextQ(),reduce?300:ok?1100:2200);}
 function finish(){if(R.status!=='crashed'){R.status='crashed';R.reason='done';}R.limit=limitMs(R);const e={date:R.date,mode:R.mode,kind:R.kind,peak:R.kind==='daily'?R.alt:R.peak,correct:R.correct,score:R.score};if(R.kind==='free'||!(P.hist||[]).some(h=>h.kind==='daily'&&h.date===R.date))P.hist=[e,...(P.hist||[])].slice(0,100);saveDaily();store();
- if(R.reason==='done'){show('crash','<div class="crash" role="status" style="background:#0b243b88"><p class="eyebrow">Alle Fragen geschafft</p><b style="color:var(--cyan);text-shadow:4px 4px 0 #1b5a6a">LANDUNG</b></div>');setTimeout(results,reduce?400:1800);return;}crashT=performance.now();show('crash',`<div class="crash" role="alert"><p class="eyebrow">Kein Auftrieb mehr</p><b>ABSTURZ</b><span>${R.kind==='daily'?'Deine Höhenreserve ist aufgebraucht.':R.reason==='timeout'?'Die Zeit ist abgelaufen.':'Die Rettung ist nach drei Fehlern misslungen.'}</span></div>`);setTimeout(results,reduce?400:2300);}
-function results(){crashT=R.reason==='done'?0:performance.now()-5000;const d=R.kind==='daily',n=R.correct,l=R.last,rank=((d?n*3:n)>=30?'Legende der Lüfte':(d?n*3:n)>=20?'Himmelsstürmer:in':(d?n*3:n)>=10?'Wolken-Profi':(d?n*3:n)>=5?'Pilot:in mit Weitblick':'Bereit für den nächsten Start'),top=(P.hist||[]).slice().sort((a,b)=>b.peak-a.peak).slice(0,5);
+ if(R.reason==='done'){show('crash','<div class="crash" role="status" style="background:#0b243b88"><p class="eyebrow">Alle Fragen geschafft</p><b style="color:var(--cyan);text-shadow:4px 4px 0 #1b5a6a">LANDUNG</b></div>');setTimeout(results,reduce?400:1800);return;}const started=performance.now();crashPose=flightPose(started);crashT=started;show('crash',`<div class="crash" role="alert"><p class="eyebrow">Kein Auftrieb mehr</p><b>ABSTURZ</b><span>${R.kind==='daily'?'Deine Höhenreserve ist aufgebraucht.':R.reason==='timeout'?'Die Zeit ist abgelaufen.':'Die Rettung ist nach drei Fehlern misslungen.'}</span></div>`);setTimeout(results,reduce?400:crashDuration+300);}
+function results(){crashT=0;crashPose=null;flightChange=null;const d=R.kind==='daily',n=R.correct,l=R.last,rank=((d?n*3:n)>=30?'Legende der Lüfte':(d?n*3:n)>=20?'Himmelsstürmer:in':(d?n*3:n)>=10?'Wolken-Profi':(d?n*3:n)>=5?'Pilot:in mit Weitblick':'Bereit für den nächsten Start'),top=(P.hist||[]).slice().sort((a,b)=>b.peak-a.peak).slice(0,5);
  show('res',`<section class="panel res"><p class="eyebrow">${d?'Tagesflug':'Flug'} beendet</p><h1 tabindex="-1">${rank}</h1><div class="depth">${fm(d?R.alt:R.peak)} <small>Meter</small></div><p class="note">${d?'Flughöhe am Ende · '+(R.alt>=1500?'+':'−')+fm(Math.abs(R.alt-1500))+' m zur Starthöhe':'Höchster Punkt'}</p>
  <div class="met"><div><strong>${n}${d?'/10':''}</strong><span>richtig</span></div><div><strong>${R.score}</strong><span>Punkte</span></div><div><strong>${sec(R.limit)}</strong><span>letztes Zeitfenster</span></div></div>
  ${l?`<details class="det" open><summary>Die letzte Frage auflösen</summary><p>${esc(l.prompt)}</p><p><b style="color:var(--cyan)">Richtig: ${esc(l.corr)}</b></p>${l.sel?`<p>Deine Antwort: ${esc(l.sel)}</p>`:''}<p>${esc(l.why)}</p><ul>${l.opts.map(o=>`<li><span>${esc(o[0])}</span><b>${esc(o[1])}</b></li>`).join('')}</ul></details>`:''}
